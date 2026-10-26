@@ -21,4 +21,9 @@ public class OrderController {
   public OrderResponse placeOrder(@Valid @RequestBody OrderRequest request) {
     return orderService.placeOrder(request);
   }
+
+  @GetMapping("/health")
+  public String health() {
+    return "order-service-ok";
+  }
 }
