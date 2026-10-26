@@ -1,71 +1,65 @@
 # E-Commerce Microservices Platform
 
-A simple e-commerce platform built using Spring Boot and Spring Cloud. It shows how multiple small services work together to place an order.
+A simple, production-style e-commerce app using Spring Boot & Spring Cloud showing real microservices concepts.
 
-## What is this?
+## What's covered
 
-This project splits an e-commerce app into separate services. Each service has one job and talks to others over REST/Feign or events. 
+- **Service Discovery** - Eureka (8761)
+- **API Gateway** - Spring Cloud Gateway (8080)
+- **Inter-service calls** - OpenFeign
+- **Resilience** - Resilience4j CircuitBreaker with fallback
+- **Event Driven** - Apache Kafka (configured)
+- **Distributed Tracing** - Micrometer + Zipkin
+- **Central Config** - Config Server ready
+- **Validation** - Bean Validation
+- **Exception Handling** - Clean REST flow
+- **API Docs** - Swagger/OpenAPI (springdoc)
+- **Tests** - JUnit 5, Mockito (unit + context tests)
+- **Docker** - docker-compose for Kafka & Zipkin
 
-## Services
+## Services & Ports
 
 | Service | Port | Purpose |
 | --- | --- | --- |
-| discovery-server (Eureka) | 8761 | Finds other services |
-| api-gateway | 8080 | Entry point for all requests |
-| product-service | 8081 | Manage products |
-| inventory-service | 8082 | Check product stock |
-| order-service | 8083 | Place orders using product + inventory |
-| payment-service | 8084 | Handle payments (basic) |
-| user-service | 8085 | Manage users |
-| notification-service | 8086 | Send/order notifications via Kafka |
-| config-server | 8888 | Central config (optional) |
+| discovery-server | 8761 | Eureka |
+| api-gateway | 8080 | All requests via gateway |
+| config-server | 8888 | Central config |
+| product-service | 8081 | Products CRUD |
+| inventory-service | 8082 | Stock check |
+| order-service | 8083 | Place order (calls inventory with Feign + Resilience4j) |
+| payment-service | 8084 | Payments |
+| user-service | 8085 | Users |
+| notification-service | 8086 | Notifications via Kafka |
 
-## How it works
+## Run
 
-1. **Add product** in product-service
-2. **Add stock** in inventory-service for that SKU
-3. **Place order** via API Gateway to order-service
-4. Order-service calls inventory-service using **OpenFeign** to check stock
-5. If in stock and OK, order is placed. If inventory is down, **Resilience4j** returns a safe fallback
-6. Events can go to Kafka for payments/notifications
-
-## Tech Used
-
-- Java 17, Spring Boot 3.5.4
-- Spring Cloud (Eureka, Gateway, OpenFeign, Config)
-- Spring Data JPA, H2
-- Apache Kafka
-- Resilience4j
-- Micrometer + Zipkin
-
-## How to run
-
-### 1) Start infra (optional but good)
 ```bash
+# Infra
 docker compose up -d
-```
-(This starts Kafka, Zipkin etc if present.)
 
-### 2) Build all
-```bash
+# Build & test
 mvn clean install
+
+# Start: discovery-server -> api-gateway -> others
 ```
 
-### 3) Run in order
-1. discovery-server (8761)
-2. api-gateway (8080)
-3. product-service, inventory-service, order-service (others)
+## Test via Gateway
 
-### 4) Test via Gateway
 ```http
 POST http://localhost:8080/api/products
 GET  http://localhost:8080/api/inventory?skuCode=IPHONE-15
 POST http://localhost:8080/api/orders
 ```
 
+## Swagger
+
+- Product: http://localhost:8081/swagger-ui.html
+- Order: http://localhost:8083/swagger-ui.html
+- Inventory: http://localhost:8082/swagger-ui.html
+
 ## Notes
 
-- Uses H2 in-memory DB (easy to test)
-- Uses constructor injection
-- Clean layers: controller, service, repository, model, dto
-- Focuses on real microservices ideas, not just CRUD
+- H2 in-memory DB for quick testing
+- Constructor injection, DTOs, layered structure
+- Positive/negative tests with Mockito
+- Ready for extension to real DB/K8s
