@@ -1,64 +1,71 @@
 # E-Commerce Microservices Platform
 
-A production-style, event-driven e-commerce platform built with Java 17, Spring Boot 3.5.4, Spring Cloud, Apache Kafka, Resilience4j, Zipkin and Docker. Designed to demonstrate real-world microservices patterns: service discovery, centralized config, API gateway, inter-service communication, event streaming, fault tolerance, distributed tracing and observability.
+A simple e-commerce platform built using Spring Boot and Spring Cloud. It shows how multiple small services work together to place an order.
 
-## Architecture
+## What is this?
 
-- **API Gateway** – Spring Cloud Gateway with route filtering, CORS
-- **Service Discovery** – Netflix Eureka
-- **Config Server** – Centralized configuration (Git-backed ready)
-- **User Service** – User registration, auth-ready domain model, validation
-- **Product Service** – Product catalog with pricing, stock checks
-- **Inventory Service** – Real-time inventory tracking with reservation
-- **Order Service** – Order orchestration with saga-style flow + Feign calls
-- **Payment Service** – Payment processing with idempotent APIs
-- **Notification Service** – Kafka consumer for order/payment events (email/SMS ready)
+This project splits an e-commerce app into separate services. Each service has one job and talks to others over REST/Feign or events. 
 
-## Tech Stack
+## Services
 
-- Java 17
-- Spring Boot 3.5.4
-- Spring Cloud 2025.0.1 (Eureka, Config, Gateway, OpenFeign)
-- Spring Data JPA, PostgreSQL/H2
+| Service | Port | Purpose |
+| --- | --- | --- |
+| discovery-server (Eureka) | 8761 | Finds other services |
+| api-gateway | 8080 | Entry point for all requests |
+| product-service | 8081 | Manage products |
+| inventory-service | 8082 | Check product stock |
+| order-service | 8083 | Place orders using product + inventory |
+| payment-service | 8084 | Handle payments (basic) |
+| user-service | 8085 | Manage users |
+| notification-service | 8086 | Send/order notifications via Kafka |
+| config-server | 8888 | Central config (optional) |
+
+## How it works
+
+1. **Add product** in product-service
+2. **Add stock** in inventory-service for that SKU
+3. **Place order** via API Gateway to order-service
+4. Order-service calls inventory-service using **OpenFeign** to check stock
+5. If in stock and OK, order is placed. If inventory is down, **Resilience4j** returns a safe fallback
+6. Events can go to Kafka for payments/notifications
+
+## Tech Used
+
+- Java 17, Spring Boot 3.5.4
+- Spring Cloud (Eureka, Gateway, OpenFeign, Config)
+- Spring Data JPA, H2
 - Apache Kafka
-- Resilience4j (CircuitBreaker, Retry, TimeLimiter)
-- Micrometer + Zipkin (Distributed Tracing)
-- Spring Boot Actuator
-- Docker Compose
+- Resilience4j
+- Micrometer + Zipkin
 
-## Features
+## How to run
 
-- Service-to-service communication via OpenFeign
-- Event-driven architecture with Kafka topics
-- Fault tolerance with Resilience4j fallbacks
-- Centralized configuration & dynamic refresh ready
-- Distributed tracing across services
-- Input validation & global exception handling
-- Clean layered architecture (controller/service/repo/model/dto)
-- Constructor injection, DTOs decoupled from entities
-
-## Quick Start
-
+### 1) Start infra (optional but good)
 ```bash
-# Build all modules
-mvn clean install
-
-# Start infrastructure
 docker compose up -d
+```
+(This starts Kafka, Zipkin etc if present.)
 
-# Run services (order: discovery, config, gateway, then others)
+### 2) Build all
+```bash
+mvn clean install
 ```
 
-## Endpoints (via Gateway)
+### 3) Run in order
+1. discovery-server (8761)
+2. api-gateway (8080)
+3. product-service, inventory-service, order-service (others)
 
-| Service | Route | Notes |
-| --- | --- | --- |
-| User | /api/users/** | CRUD + validation |
-| Product | /api/products/** | Catalog |
-| Inventory | /api/inventory/** | Stock check/reserve |
-| Order | /api/orders/** | Place order (orchestrates) |
-| Payment | /api/payments/** | Process payment |
+### 4) Test via Gateway
+```http
+POST http://localhost:8080/api/products
+GET  http://localhost:8080/api/inventory?skuCode=IPHONE-15
+POST http://localhost:8080/api/orders
+```
 
-## Learning Goals
+## Notes
 
-Demonstrates practical implementation of microservices patterns used in production systems.
+- Uses H2 in-memory DB (easy to test)
+- Uses constructor injection
+- Clean layers: controller, service, repository, model, dto
+- Focuses on real microservices ideas, not just CRUD
