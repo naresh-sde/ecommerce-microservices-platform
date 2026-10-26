@@ -11,22 +11,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class ProductService {
   private final ProductRepository productRepository;
+
+  public ProductService(ProductRepository productRepository) {
+    this.productRepository = productRepository;
+  }
 
   public ProductResponse create(ProductRequest request) {
     if (productRepository.existsBySku(request.getSku())) {
       throw new IllegalArgumentException("Product with sku already exists");
     }
-    Product product = Product.builder()
-      .sku(request.getSku())
-      .name(request.getName())
-      .description(request.getDescription())
-      .price(request.getPrice())
-      .category(request.getCategory())
-      .active(request.isActive())
-      .build();
+    Product product = new Product();
+    product.setSku(request.getSku());
+    product.setName(request.getName());
+    product.setDescription(request.getDescription());
+    product.setPrice(request.getPrice());
+    product.setCategory(request.getCategory());
+    product.setActive(request.isActive());
     Product saved = productRepository.save(product);
     return map(saved);
   }
@@ -42,14 +44,14 @@ public class ProductService {
   }
 
   private ProductResponse map(Product product) {
-    return ProductResponse.builder()
-      .id(product.getId())
-      .sku(product.getSku())
-      .name(product.getName())
-      .description(product.getDescription())
-      .price(product.getPrice())
-      .category(product.getCategory())
-      .active(product.isActive())
-      .build();
+    ProductResponse response = new ProductResponse();
+    response.setId(product.getId());
+    response.setSku(product.getSku());
+    response.setName(product.getName());
+    response.setDescription(product.getDescription());
+    response.setPrice(product.getPrice());
+    response.setCategory(product.getCategory());
+    response.setActive(product.isActive());
+    return response;
   }
 }
