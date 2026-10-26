@@ -1,0 +1,15 @@
+target/
+*.log
+HELP.md
+*.iml
+.idea/
+.DS_Store
+.classpath
+.project
+.settings/
+bin/
+.factorypath
+application-*.local.yml
+*.jar
+*.war
+.env
